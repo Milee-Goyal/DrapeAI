@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DrapeAI - Context-Aware Virtual Try-On & E-Commerce Outfit Recommender</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- TOP NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-wrap">
+            <a href="#" class="brand-logo">
+                <div class="logo-badge">D</div>
+                <div class="brand-text">
+                    <h1>DrapeAI</h1>
+                    <span>Virtual Fitting & Stylist</span>
+                </div>
+            </a>
+
+            <ul class="nav-menu">
+                <li><a href="#studio" class="active">Stylist Studio</a></li>
+                <li><a href="#tryon">Virtual Try-On</a></li>
+                <li><a href="#ecommerce">Store Matches</a></li>
+                <li><a href="#stores">My Stores</a></li>
+                <li><a href="#wardrobe">My Wardrobe</a></li>
+            </ul>
+
+            <div class="nav-auth">
+                <div id="user-logged-in-pill" style="display: none; align-items: center; gap: 10px;">
+                    <span id="nav-username" style="font-size: 13.5px; font-weight: 700; color: var(--navy-dark);"></span>
+                    <button class="btn btn-outline btn-sm" onclick="handleLogout()">Sign Out</button>
+                </div>
+                <div id="user-logged-out-pill" style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline btn-sm" onclick="openAuthModal('login')">Sign In</button>
+                    <button class="btn btn-primary btn-sm" onclick="openAuthModal('register')">Register</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- AUTHENTICATION / PRIVACY NOTICE BANNER -->
+    <div id="auth-reminder-banner" class="auth-banner">
+        <div class="container auth-banner-content">
+            <div>
+                <span><strong>Private & Secure Session:</strong> Sign in to save your personal photo, customize your own shopping stores (e.g. Meesho, Flipkart, Amazon), and store your private wardrobe.</span>
+            </div>
+            <div>
+                <button class="btn btn-gold btn-sm" onclick="openAuthModal('login')">Sign In to Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO HEADER -->
+    <header class="hero-section">
+        <div class="container">
+            <div class="hero-pill">Computer Vision & Generative AI Fashion Platform</div>
+            <h2>See How Outfits Look On You Before Buying.</h2>
+            <p>Upload your portrait, choose any event, and let DrapeAI analyze your skin undertone to formulate matching outfits, virtually drape them onto your photo, and search prices across your favorite e-commerce stores.</p>
+        </div>
+    </header>
+
+    <!-- MAIN STUDIO -->
+    <main class="container" id="studio">
+        <div class="studio-layout">
+            
+            <!-- LEFT COLUMN: INPUTS & PROFILE -->
+            <div>
+                <!-- STEP 1: PHOTO UPLOAD & COLORIMETRY -->
+                <div class="card-box">
+                    <div class="step-header">
+                        <div class="step-num">1</div>
+                        <h3>Upload Portrait Photo</h3>
+                        <span class="badge">OpenCV Colorimetry</span>
+                    </div>
+
+                    <div class="upload-dropzone" id="photo-dropzone" onclick="document.getElementById('portrait-input').click()">
+                        <div class="upload-icon" style="font-size: 16px; font-weight: 700; color: var(--navy-primary); margin-bottom: 6px;">[ Choose Image File ]</div>
+                        <p style="font-weight: 700; font-size: 14px; color: var(--navy-dark);">Click or Drag & Drop Portrait Photo</p>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Clear front-facing photo for skin tone and virtual try-on</p>
+                        <input type="file" id="portrait-input" accept="image/jpeg,image/png" style="display: none;" onchange="handlePhotoUpload(this)">
+                        <img id="portrait-preview" class="upload-preview-img" style="display: none;" alt="User Portrait">
+                    </div>
+
+                    <!-- Skin Analysis Result -->
+                    <div id="colorimetry-result-card" class="analysis-card" style="display: none;">
+                        <div class="analysis-row">
+                            <div>
+                                <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Skin Complexion</span>
+                                <div id="undertone-title" style="font-size: 15px; font-weight: 800; color: var(--navy-dark); margin-top: 2px;">Warm Undertone</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Color Season</span>
+                                <div id="season-title" style="font-size: 14px; font-weight: 700; color: var(--gold); margin-top: 2px;">Deep Autumn</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 10px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--navy-dark);">Flattering Colors For Your Complexion:</span>
+                            <div id="palette-swatches-box" class="color-swatches-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: EVENT & BUDGET CONSTRAINTS -->
+                <div class="card-box">
+                    <div class="step-header">
+                        <div class="step-num">2</div>
+                        <h3>Occasion & Custom Budget</h3>
+                        <span class="badge">AI Context Stylist</span>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="event-select">Occasion / Dress Code</label>
+                        <select id="event-select" class="form-select">
+                            <option value="Wedding">Wedding Reception / Festive Gala</option>
+                            <option value="Corporate Formal">Corporate Formal / Job Interview</option>
+                            <option value="Cocktail Party">Cocktail Party / Evening Lounge</option>
+                            <option value="Casual Outing" selected>Weekend Casual / Friends Hangout</option>
+                            <option value="Date Night">Romantic Date Night</option>
+                            <option value="Beach Vacation">Beach Resort & Vacation</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Maximum Spending Ceiling</label>
+                        <div class="budget-slider-row">
+                            <input type="range" id="budget-range" min="1500" max="30000" step="500" value="4500" class="form-select" style="padding: 0;" oninput="updateBudgetSlider(this.value)">
+                            <div id="budget-badge" class="budget-val-badge">₹4,500</div>
+                        </div>
+                        <span style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px; display: block;">Guarantees the entire outfit bundle (Top + Bottom + Footwear) stays within budget.</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div class="form-field">
+                            <label for="city-input">City / Location</label>
+                            <input type="text" id="city-input" class="form-input" value="Delhi">
+                        </div>
+                        <div class="form-field">
+                            <label for="body-type-select">Body Type</label>
+                            <select id="body-type-select" class="form-select">
+                                <option value="Rectangle" selected>Rectangle (Balanced)</option>
+                                <option value="Hourglass">Hourglass</option>
+                                <option value="Inverted Triangle">Inverted Triangle (Athletic)</option>
+                                <option value="Pear">Pear (Wider Hips)</option>
+                                <option value="Athletic">Athletic / Muscular</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="generate-outfit-btn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 8px;" onclick="generateOutfit()">
+                        Formulate Outfit & Search Stores
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: OUTFIT, TRY-ON & STORES -->
+            <div>
+                <!-- EMPTY STATE -->
+                <div id="empty-state-box" class="card-box" style="text-align: center; padding: 70px 20px;">
+                    <div style="font-size: 16px; font-weight: 700; color: var(--navy-light); margin-bottom: 8px;">[ Fitting Canvas Ready ]</div>
+                    <h3 style="font-size: 20px; color: var(--navy-dark); margin-bottom: 8px;">Your Personal Fitting Room</h3>
+                    <p style="color: var(--text-secondary); max-width: 440px; margin: 0 auto; font-size: 14px;">Upload your photo on the left and click Formulate Outfit to see your coordinated wardrobe blueprint and photorealistic 2D Virtual Try-On.</p>
+                </div>
+
+                <!-- RESULTS PANEL -->
+                <div id="results-panel" style="display: none;">
+                    
+                    <!-- Stylist Details & Rationale -->
+                    <div class="card-box">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <span style="font-size: 11px; font-weight: 700; background: #E2E8F0; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Curated Recommendation</span>
+                                <h2 id="outfit-theme-title" style="font-size: 22px; font-weight: 800; color: var(--navy-dark); margin-top: 4px;">Executive Power Attire</h2>
+                                <p id="outfit-palette-subtitle" style="font-size: 13.5px; font-weight: 700; color: var(--gold); margin-top: 2px;">Navy Blue & Charcoal Slate</p>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="saveLookToWardrobe()">Save to Wardrobe</button>
+                        </div>
+
+                        <div class="outfit-details-box">
+                            <p id="outfit-rationale-text" style="font-size: 13.5px; color: var(--navy-light);"></p>
+                        </div>
+
+                        <!-- VIRTUAL TRY-ON STAGE (Side-by-Side Comparison) -->
+                        <div id="tryon" class="tryon-stage">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <h3 style="font-size: 17px; font-weight: 800; color: var(--navy-dark);">2D Virtual Try-On Canvas</h3>
+                                    <p style="font-size: 12px; color: var(--text-muted);">See the recommended garment superimposed onto your body</p>
+                                </div>
+                                <button id="trigger-tryon-btn" class="btn btn-gold" onclick="executeVirtualTryOn()">
+                                    Render Virtual Try-On
+                                </button>
+                            </div>
+
+                            <div class="tryon-canvas-grid">
+                                <div class="tryon-box">
+                                    <h4>Original Photo</h4>
+                                    <img id="view-original-photo" src="/static/default_user.jpg" class="tryon-img" alt="Original User Photo">
+                                </div>
+                                <div class="tryon-box" style="border-color: var(--gold);">
+                                    <h4 id="tryon-view-header" style="color: var(--gold);">DrapeAI Virtual Fit</h4>
+                                    <img id="view-tryon-photo" src="/static/default_user.jpg" class="tryon-img" alt="Virtual Try-On Output">
+                                </div>
+                            </div>
+
+                            <!-- Live Garment Color Switcher -->
+                            <div class="tryon-color-palette-bar">
+                                <span class="tryon-palette-label">Instant Garment Color Switcher:</span>
+                                <div class="tryon-palette-chips" id="tryon-live-chips">
+                                    <button type="button" class="palette-chip active" onclick="applyTryonColor('#C85A32', 'Terracotta Rust', this)"><span class="color-dot" style="background: #C85A32;"></span> Terracotta</button>
+                                    <button type="button" class="palette-chip" onclick="applyTryonColor('#2D5A27', 'Emerald Moss', this)"><span class="color-dot" style="background: #2D5A27;"></span> Emerald</button>
+                                    <button type="button" class="palette-chip" onclick="applyTryonColor('#722F37', 'Rich Burgundy', this)"><span class="color-dot" style="background: #722F37;"></span> Burgundy</button>
+                                    <button type="button" class="palette-chip" onclick="applyTryonColor('#2A4B7C', 'Royal Navy', this)"><span class="color-dot" style="background: #2A4B7C;"></span> Royal Navy</button>
+                                    <button type="button" class="palette-chip" onclick="applyTryonColor('#E0A926', 'Festive Ochre', this)"><span class="color-dot" style="background: #E0A926;"></span> Festive Gold</button>
+                                    <button type="button" class="palette-chip" onclick="applyTryonColor('#967BB6', 'Lavender Mist', this)"><span class="color-dot" style="background: #967BB6;"></span> Lavender</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BUYABLE ITEMS & MULTI-STORE PRICE MATCHING -->
+                        <div id="ecommerce" style="margin-top: 24px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <h3 style="font-size: 17px; font-weight: 800; color: var(--navy-dark);">Price Comparison & Buyable Items</h3>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Aggregated exclusively across your active shopping stores</p>
+                                </div>
+                                <div id="bundle-budget-badge" style="font-size: 12.5px; background: #D1FAE5; color: #065F46; padding: 5px 12px; border-radius: 20px; font-weight: 700;"></div>
+                            </div>
+
+                            <div id="garments-items-container" class="garments-grid"></div>
+
+                            <!-- Single-Click Add to Store Cart -->
+                            <div style="background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 14px; color: var(--navy-dark);">Instant Cart Sync</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Transfer this entire coordinated bundle into your connected store cart</div>
+                                </div>
+                                <div id="cart-sync-buttons-strip" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: MY E-COMMERCE STORES (USER CAN ADD / REMOVE / TOGGLE STORES) -->
+        <section id="stores" class="card-box" style="margin-bottom: 40px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h2 style="font-size: 20px; font-weight: 800; color: var(--navy-dark);">My E-Commerce Stores Manager</h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Add or remove shopping websites to customize where DrapeAI searches for clothes. Outfits will only be matched against the stores you keep active.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="openAddStoreModal()">+ Add New Store</button>
+            </div>
+
+            <!-- Active Stores Grid -->
+            <div id="stores-manager-list" class="stores-manager-grid">
+                <!-- Dynamically loaded stores -->
+            </div>
+        </section>
+
+        <!-- SECTION 3: MY WARDROBE (SAVED LOOKS) -->
+        <section id="wardrobe" class="card-box" style="margin-bottom: 60px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h2 style="font-size: 20px; font-weight: 800; color: var(--navy-dark);">My Private Wardrobe</h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Your historical fittings and favorite event ensembles.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="loadSavedWardrobe()">Refresh</button>
+            </div>
+            <div id="wardrobe-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;">
+                <p style="color: var(--text-muted); font-size: 14px;">No saved looks yet. Formulate an outfit above and click "Save to Wardrobe".</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- AUTHENTICATION MODAL -->
+    <div id="auth-modal-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            <div class="modal-tabs">
+                <div id="auth-tab-login" class="modal-tab-btn active" onclick="switchAuthTab('login')">Sign In</div>
+                <div id="auth-tab-register" class="modal-tab-btn" onclick="switchAuthTab('register')">Create Account</div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="form-login" onsubmit="submitLogin(event)">
+                <div class="form-field">
+                    <label>Username</label>
+                    <input type="text" id="login-user-input" class="form-input" required placeholder="Enter your username">
+                </div>
+                <div class="form-field">
+                    <label>Password</label>
+                    <input type="password" id="login-pass-input" class="form-input" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">Sign In to DrapeAI</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="form-register" style="display: none;" onsubmit="submitRegister(event)">
+                <div class="form-field">
+                    <label>Username</label>
+                    <input type="text" id="reg-user-input" class="form-input" required placeholder="Choose a username">
+                </div>
+                <div class="form-field">
+                    <label>Email Address</label>
+                    <input type="email" id="reg-email-input" class="form-input" required placeholder="name@domain.com">
+                </div>
+                <div class="form-field">
+                    <label>Password</label>
+                    <input type="password" id="reg-pass-input" class="form-input" required placeholder="At least 6 characters">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">Create Free Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD STORE MODAL -->
+    <div id="add-store-modal-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-btn" onclick="closeAddStoreModal()">&times;</span>
+            <h3 style="font-size: 18px; font-weight: 800; color: var(--navy-dark); margin-bottom: 6px;">Add Custom E-Commerce Store</h3>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;">Quick-add popular retail platforms or type any custom store name.</p>
+
+            <label style="font-size: 12px; font-weight: 700; color: var(--navy-dark);">Quick Presets (Click to Select):</label>
+            <div class="preset-strip">
+                <span class="preset-chip" onclick="fillStorePreset('Flipkart', 'https://www.flipkart.com/search?q=', '#2874F0')">Flipkart</span>
+                <span class="preset-chip" onclick="fillStorePreset('Meesho', 'https://www.meesho.com/search?q=', '#9C27B0')">Meesho</span>
+                <span class="preset-chip" onclick="fillStorePreset('Myntra', 'https://www.myntra.com/', '#FF3E6C')">Myntra</span>
+                <span class="preset-chip" onclick="fillStorePreset('Amazon', 'https://www.amazon.in/s?k=', '#FF9900')">Amazon</span>
+                <span class="preset-chip" onclick="fillStorePreset('Ajio', 'https://www.ajio.com/search/?text=', '#2C4152')">Ajio</span>
+                <span class="preset-chip" onclick="fillStorePreset('H&M', 'https://www2.hm.com/en_in/search-results.html?q=', '#E50010')">H&M</span>
+                <span class="preset-chip" onclick="fillStorePreset('Zara', 'https://www.zara.com/in/en/search?searchTerm=', '#000000')">Zara</span>
+                <span class="preset-chip" onclick="fillStorePreset('Nykaa', 'https://www.nykaafashion.com/catalogsearch/result/?q=', '#FC2779')">Nykaa</span>
+            </div>
+
+            <form onsubmit="submitAddCustomStore(event)" style="margin-top: 14px;">
+                <div class="form-field">
+                    <label>Store Name</label>
+                    <input type="text" id="new-store-name" class="form-input" required placeholder="e.g. Meesho or Urbanic">
+                </div>
+                <div class="form-field">
+                    <label>Store Search URL (Optional)</label>
+                    <input type="url" id="new-store-url" class="form-input" placeholder="e.g. https://www.meesho.com/search?q=">
+                    <span style="font-size: 11px; color: var(--text-muted);">Leave empty to auto-detect search links.</span>
+                </div>
+                <button type="submit" class="btn btn-gold" style="width: 100%; margin-top: 8px;">Save Store to My Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST ALERT -->
+    <div id="toast-notification" class="toast-alert"></div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
